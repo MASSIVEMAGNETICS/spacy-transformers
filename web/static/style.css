@@ -1,0 +1,210 @@
+/* FILE: web/static/style.css */
+/* VERSION: v1.0.0-WEB-GUI-GODCORE */
+/* AUTHOR: Brandon "iambandobandz" Emery x Victor (Fractal Architect Mode) */
+/* PURPOSE: Stylesheet for Victor's remote cognitive interface. */
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap');
+
+:root {
+    --primary-bg: #0a0a0a;
+    --secondary-bg: #101018;
+    --tertiary-bg: #1a1a2e;
+    --accent-color: #00ffcc;
+    --text-color: #e0e0e0;
+    --error-color: #ff4141;
+    --success-color: #00ff88;
+    --font-primary: 'Orbitron', sans-serif;
+    --font-secondary: 'Roboto Mono', monospace;
+}
+
+body {
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    font-family: var(--font-secondary);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#ui-container {
+    width: 95%;
+    height: 95%;
+    max-width: 1600px;
+    max-height: 900px;
+    background-color: var(--secondary-bg);
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 0 25px rgba(0, 255, 204, 0.3);
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+header {
+    padding: 10px 20px;
+    background-color: var(--tertiary-bg);
+    border-bottom: 1px solid var(--accent-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    font-family: var(--font-primary);
+    font-size: 1.5em;
+    color: var(--accent-color);
+    margin: 0;
+    letter-spacing: 2px;
+    text-shadow: 0 0 5px var(--accent-color);
+}
+
+#connection-status {
+    display: flex;
+    align-items: center;
+    font-family: var(--font-primary);
+    font-weight: bold;
+}
+
+#connection-status span {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+}
+
+#connection-status.status-disconnected span {
+    background-color: var(--error-color);
+}
+
+#connection-status.status-connected span {
+    background-color: var(--success-color);
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+}
+
+
+main {
+    display: flex;
+    flex: 1;
+    padding: 20px;
+    gap: 20px;
+    overflow: hidden;
+}
+
+#avatar-container {
+    flex: 1;
+    background-color: var(--primary-bg);
+    border: 1px solid var(--tertiary-bg);
+    border-radius: 5px;
+    position: relative;
+    min-width: 300px;
+}
+
+#avatar-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+#avatar-overlay {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 0.9em;
+}
+
+#victor-emotion, #victor-consciousness {
+    margin: 0;
+    font-family: var(--font-primary);
+}
+
+#interaction-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--tertiary-bg);
+    border-radius: 5px;
+    padding: 15px;
+}
+
+#conversation-log {
+    flex-grow: 1;
+    overflow-y: auto;
+    background-color: var(--primary-bg);
+    padding: 10px;
+    border-radius: 3px;
+    border: 1px solid #2a2a3e;
+    margin-bottom: 15px;
+}
+
+#conversation-log p {
+    margin: 0 0 1em 0;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.user-message {
+    color: var(--success-color);
+}
+
+.victor-message {
+    color: var(--text-color);
+}
+
+.system-message {
+    color: #aaa;
+    font-style: italic;
+}
+
+#input-area {
+    display: flex;
+    gap: 10px;
+}
+
+#user-input {
+    flex-grow: 1;
+    background-color: var(--primary-bg);
+    border: 1px solid var(--accent-color);
+    color: var(--text-color);
+    padding: 10px;
+    border-radius: 3px;
+    font-size: 1em;
+    font-family: var(--font-secondary);
+}
+
+#user-input:focus {
+    outline: none;
+    box-shadow: 0 0 8px var(--accent-color);
+}
+
+button {
+    padding: 10px 15px;
+    font-family: var(--font-primary);
+    font-weight: bold;
+    background-color: var(--tertiary-bg);
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+    background-color: #16213e;
+    box-shadow: 0 0 5px var(--accent-color);
+}
+
+#listen-button {
+    font-size: 1.2em;
+}

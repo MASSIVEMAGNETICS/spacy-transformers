@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Victor - Remote Interface</title>
+    <!-- The main stylesheet for the interface -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Favicon - a small touch of identity -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧬</text></svg>">
+</head>
+<body>
+    <!-- Main container for the entire UI -->
+    <div id="ui-container">
+
+        <!-- Header Section -->
+        <header>
+            <h1>VICTOR REMOTE COGNITIVE INTERFACE</h1>
+            <div id="connection-status" class="status-disconnected">
+                <span></span>DISCONNECTED
+            </div>
+        </header>
+
+        <!-- Core content area -->
+        <main>
+            <!-- Left panel for the 3D avatar -->
+            <div id="avatar-container">
+                <div id="avatar-canvas"></div>
+                <div id="avatar-overlay">
+                    <p id="victor-emotion">EMOTION: NEUTRAL</p>
+                    <p id="victor-consciousness">AWARENESS: 0.10</p>
+                </div>
+            </div>
+
+            <!-- Right panel for interaction and logs -->
+            <div id="interaction-container">
+                <h2>Conversation Log</h2>
+                <div id="conversation-log">
+                    <p class="system-message">Initializing connection to Victor's Core...</p>
+                </div>
+                <div id="input-area">
+                    <input type="text" id="user-input" placeholder="Speak your directive..." autocomplete="off">
+                    <button id="send-button" onclick="sendTextInput()">SEND</button>
+                    <button id="listen-button" onclick="startSpeechRecognition()">🎙️</button>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <!-- Socket.IO for real-time communication -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <!-- Three.js for 3D rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+    <!-- GLTFLoader for loading the 3D model -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <!-- Custom application script -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
