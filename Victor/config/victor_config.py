@@ -31,6 +31,24 @@ class VictorSystemConfig:
         """Returns the list of immutable laws for Victor."""
         return self.config.get('immutable_laws', [])
 
+VICTOR_GUI_CONFIG = {
+    'user_name': 'Bando',
+    'plan_type': 'OmniVictor Ascension',
+    'ai_instructions': {
+        'file_search': {
+            'use_case': 'Search through local documents and project files to find information.',
+            'limitations': [
+                'I can only search files that are text-based.',
+                'I cannot search files on the internet, only on the local system.',
+                'My search is based on keywords and may not understand complex queries perfectly.'
+            ]
+        },
+        'web': {
+            'use_case': 'Use web search capabilities to find up-to-date information on the internet.'
+        }
+    }
+}
+
 # Global instance for easy access across the application
 try:
     VICTOR_CONFIG = VictorSystemConfig()
