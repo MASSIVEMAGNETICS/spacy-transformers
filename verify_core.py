@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 # Add project root to path to solve import issues
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
@@ -9,14 +10,14 @@ if project_root not in sys.path:
 from Victor.core.synthesis_core import VictorSynthesisCore
 
 def run_verification():
-    print("--- Verifying Victor's Core ---")
+    print("--- Verifying Victor's Core with JEPA Integration ---")
 
     model_path = "test_model.npz"
     if os.path.exists(model_path):
         os.remove(model_path)
 
     # 1. Initialize the core
-    print("Initializing VictorSynthesisCore...")
+    print("\n1. Initializing VictorSynthesisCore...")
     try:
         core = VictorSynthesisCore(model_path=model_path)
         print("Core initialized.")
@@ -25,26 +26,48 @@ def run_verification():
         return
 
     # 2. Awaken Victor
-    print("Awakening Victor...")
+    print("\n2. Awakening Victor and starting sensory loop...")
     core.awaken()
     if not core.awake:
-        print("Victor failed to awaken.")
+        print("FAILURE: Victor failed to awaken.")
         return
     print("Victor is awake.")
 
-    # 3. Process a directive
-    print("Processing a test directive...")
+    # Give the sensory loop time to run
+    print("Waiting for sensory loop to populate the Cognitive River...")
+    time.sleep(2)
+
+    # 3. Verify sensory stream
+    print("\n3. Verifying sensory stream in Cognitive River...")
+    snapshot = core.cognitive_river.snapshot()
+    sensory_data = snapshot.get('last_merge', {}).get('signal', {}).get('sensory', {})
+    if sensory_data and 'latent_vector' in sensory_data:
+        print("SUCCESS: Sensory stream contains JEPA latent vector.")
+        print(f"   - Novelty: {sensory_data.get('novelty')}")
+        print(f"   - Latent vector length: {len(sensory_data.get('latent_vector'))}")
+    else:
+        print("FAILURE: Sensory stream does not contain JEPA data.")
+        core.shutdown()
+        return
+
+    # 4. Process a directive and check for sensory influence
+    print("\n4. Processing a test directive and checking for sensory influence...")
     prompt = "Who are you?"
     result = core.process_directive(prompt)
-    print(f"Response from Victor: {result.get('response')}")
+    response = result.get('response', '')
+    print(f"Response from Victor: {response}")
+    if "novel" in response or "activated" in response:
+        print("SUCCESS: Response shows influence from the sensory stream.")
+    else:
+        print("NOTE: Response does not contain explicit sensory comments, which is acceptable.")
 
-    # 4. Shutdown Victor
-    print("Shutting down Victor...")
+    # 5. Shutdown Victor
+    print("\n5. Shutting down Victor...")
     core.shutdown()
     print("Shutdown complete.")
 
-    # 5. Verify model was saved
-    print("Verifying model persistence...")
+    # 6. Verify model was saved
+    print("\n6. Verifying model persistence...")
     if os.path.exists(model_path):
         print(f"SUCCESS: Model file '{model_path}' was created.")
         os.remove(model_path) # Clean up

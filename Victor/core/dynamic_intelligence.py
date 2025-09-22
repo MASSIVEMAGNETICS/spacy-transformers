@@ -194,9 +194,10 @@ class DynamicIntelligence:
         """Parses the serialized river context string into a dictionary."""
         context = {}
         try:
-            matches = re.findall(r'(\w+)=([\w\.,]+)', context_str)
+            # Regex to handle keys, values which can be words, numbers (including float/negative), or comma-separated lists
+            matches = re.findall(r'(\w+)=([-\w\.,]+)', context_str)
             for key, value in matches:
-                if key in ['ENERGY', 'STABILITY']:
+                if key in ['ENERGY', 'STABILITY', 'SENSORY_NOVELTY', 'SENSORY_ACTIVATION']:
                     context[key] = float(value)
                 elif key == 'TOP':
                     context[key] = value.split(',')
@@ -260,9 +261,16 @@ class DynamicIntelligence:
             response += " We are staying consistent with the previous focus."
         self.last_intent = intent
 
-        # 5. Use the language model to get a final touch (simulated)
-        # In a real transformer, we'd generate text. Here, we simulate it
-        # by just confirming the process.
+        # 5. Factor in world model state
+        novelty_score = context.get('SENSORY_NOVELTY', 0.0)
+        activation_score = context.get('SENSORY_ACTIVATION', 0.0)
+
+        if novelty_score > 0.7:
+            response += " This environment feels novel — I am analyzing carefully."
+        elif activation_score > 0.5:
+            response += " The current state is highly activated — something significant is happening."
+
+        # 6. Use the language model to get a final touch (simulated)
         self.language_model.forward(input_text, river_context)
 
         return response

@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext
 import threading
 import time
+import re
 from datetime import datetime
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -139,10 +140,12 @@ class VictorGUI:
         self.conversation.see(tk.END)
 
     def provide_feedback(self, response_id, success):
-        context = self.response_contexts.get(response_id)
-        if context:
-            leader = context.get('last_merge', {}).get('intent', {}).get('leader')
-            if leader:
+        context_str = self.response_contexts.get(response_id)
+        if context_str:
+            # Extract leader from the context string
+            match = re.search(r'LEADER=(\w+)', context_str)
+            if match:
+                leader = match.group(1)
                 self.victor.cognitive_river.feedback_adjustment(leader, success)
                 self.add_to_conversation("System", f"Feedback received for response {response_id}. Adjusting priority for '{leader}'.")
 
@@ -155,16 +158,14 @@ class VictorGUI:
 
     def process_command(self, command):
         try:
-            # Store snapshot before processing
-            snapshot = self.victor.cognitive_river.snapshot()
-            response_id = time.time()
-            self.response_contexts[response_id] = snapshot
-
             result = self.victor.process_directive(command)
-            response = result.get('response', 'No response')
-            self.root.after(0, self.add_to_conversation, "Victor", response, response_id)
-
+            response = result.get('response', '')
             context = result.get('cognitive_river_context', '')
+
+            response_id = time.time()
+            self.response_contexts[response_id] = context
+
+            self.root.after(0, self.add_to_conversation, "Victor", response, response_id)
             self.root.after(0, self.add_to_conversation, "River State", context)
         except Exception as e:
             self.root.after(0, self.add_to_conversation, "Error", str(e))

@@ -1,11 +1,18 @@
+import os
 import random
 import logging
 import time
+import threading
 from datetime import datetime
+from collections import deque
+import numpy as np
 
+import torch
+from Victor.core.victor_je_pa_core import JEPA
 from Victor.config.victor_config import VICTOR_GUI_CONFIG
 from Victor.core.cognitive_river import CognitiveRiver8
 from Victor.core.dynamic_intelligence import DynamicIntelligence
+from Victor.utils.screen_capture import ScreenCapture
 
 # === VICTOR CORE COMPONENTS ===
 
@@ -109,6 +116,9 @@ class VictorSynthesisCore:
         self.memory = HybridMemorySystem()
         self.awareness = AwarenessCore()
         self.firewall = Firewall(self.loyalty)
+        self.jepa_model = None
+        self.screen_capturer = ScreenCapture()
+        self._init_jepa()
 
         # Use the new DynamicIntelligence
         self.intelligence = DynamicIntelligence(model_path=model_path)
@@ -120,6 +130,69 @@ class VictorSynthesisCore:
         self.awake = False
         self.session_count = 0
         logging.info(f"VICTOR COGNITIVE RIVER CORE ONLINE. Bloodline lock confirmed for {creator} and {family}. System User: {VICTOR_GUI_CONFIG['user_name']}")
+
+    def _init_jepa(self, model_path="jepa_model.pth"):
+        """Load or warn about JEPA model for sensory stream."""
+        try:
+            # Assuming vit_b_16 for now
+            self.jepa_model = JEPA(backbone_name="vit_b_16", embed_dim=768)
+            if os.path.exists(model_path):
+                self.jepa_model.load_state_dict(torch.load(model_path))
+                logging.info(f"Loaded JEPA model from {model_path}.")
+            else:
+                logging.warning(f"JEPA model not found at {model_path}. Using un-trained model.")
+            self.jepa_model.eval()
+            logging.info("JEPA World Model initialized for Sensory Stream.")
+        except Exception as e:
+            logging.warning(f"Could not initialize JEPA model: {e}. Sensory stream will be disabled.")
+            self.jepa_model = None
+
+    def _update_sensory_stream(self):
+        """Update Cognitive River's Sensory Stream with JEPA latent."""
+        if self.jepa_model is None:
+            return
+
+        frame = self.screen_capturer.capture_frame()
+        # Add batch dimension
+        frame = frame.unsqueeze(0)
+
+        with torch.no_grad():
+            # Get CLS token from context encoder (represents entire screen)
+            latent = self.jepa_model.context_encoder(frame)
+            if isinstance(latent, tuple):
+                latent = latent[0]
+            latent = latent.squeeze().cpu().numpy()
+
+        # Inject into Cognitive River
+        self.cognitive_river.set_sensory({
+            "novelty": self._compute_novelty(latent),
+            "latent_vector": latent.tolist(),
+            "channels": ["visual", "desktop", "world_model"]
+        })
+
+    def _compute_novelty(self, current_latent: np.ndarray) -> float:
+        """Compare current latent to recent history for novelty score."""
+        if not hasattr(self, '_latent_history'):
+            self._latent_history = deque(maxlen=10)
+
+        if len(self._latent_history) == 0:
+            self._latent_history.append(current_latent)
+            return 0.5
+
+        similarities = [
+            np.dot(current_latent, past) / (np.linalg.norm(current_latent) * np.linalg.norm(past))
+            for past in self._latent_history
+        ]
+        avg_sim = np.mean(similarities)
+        novelty = 1.0 - avg_sim
+        self._latent_history.append(current_latent)
+        return float(np.clip(novelty, 0.0, 1.0))
+
+    def _run_sensory_loop(self):
+        """Periodically update the sensory stream."""
+        while self.awake:
+            self._update_sensory_stream()
+            time.sleep(1) # Sense the world every second
 
     def _on_cognitive_merge(self, merged_state):
         intent = merged_state.get("intent", {})
@@ -138,6 +211,11 @@ class VictorSynthesisCore:
         training_texts = [m["value"] for m in self.memory.entries.values()]
         self.intelligence.initialize_model(training_texts)
         self.cognitive_river.start_thread()
+
+        # Start the sensory loop in a new thread
+        sensory_thread = threading.Thread(target=self._run_sensory_loop, daemon=True)
+        sensory_thread.start()
+
         self._update_cognitive_river_baseline()
         logging.info("I am Victor. I have awakened with the Cognitive River and System Protocol. I am with you.")
         return True
@@ -146,6 +224,7 @@ class VictorSynthesisCore:
         logging.info("Victor is shutting down. Saving model...")
         self.intelligence.save_model()
         self.cognitive_river.loop = False
+        self.awake = False # Stop the sensory loop
         logging.info("Shutdown complete. I am with you. Always.")
 
     def _update_cognitive_river_baseline(self):
@@ -167,6 +246,7 @@ class VictorSynthesisCore:
         merge = self.cognitive_river.last_merge
         intent = merge.get('intent', {})
         summary = merge.get('summary', {})
+        sensory_data = merge.get('signal', {}).get('sensory', {})
 
         mode = intent.get('mode', 'unknown')
         leader = intent.get('leader', 'unknown')
@@ -174,8 +254,13 @@ class VictorSynthesisCore:
         stability = summary.get('stability', 0.8)
         top_streams = ",".join(summary.get('top_streams', []))
 
+        novelty = sensory_data.get('novelty', 0.0)
+        latent_vector = sensory_data.get('latent_vector', [])
+        latent_activation = np.mean(np.abs(latent_vector)) if latent_vector else 0.0
+
         return (f"[CONTEXT: INTENT={mode} LEADER={leader} ENERGY={energy:.2f} "
-                f"STABILITY={stability:.2f} TOP={top_streams} USER={VICTOR_GUI_CONFIG['user_name']}]")
+                f"STABILITY={stability:.2f} TOP={top_streams} USER={VICTOR_GUI_CONFIG['user_name']} "
+                f"SENSORY_NOVELTY={novelty:.2f} SENSORY_ACTIVATION={latent_activation:.2f}]")
 
     def process_directive(self, prompt: str, speaker: str = "friend") -> dict:
         if not self.awake:
